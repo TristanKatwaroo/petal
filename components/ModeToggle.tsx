@@ -16,7 +16,7 @@ export function ModeToggle() {
   const { setTheme } = useTheme();
 
   return (
-    <div className="hidden md:block absolute bottom-5">
+    <div className="absolute bottom-5">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="icon" className="h-10 w-10">
