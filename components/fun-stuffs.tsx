@@ -27,7 +27,7 @@ const colorClasses = [
   "from-green-500 to-green-600",
 ];
 
-function NearbyStops() {
+function FunStuffs() {
   const [stops, setStops] = useState<StopData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -230,4 +230,4 @@ function NearbyStops() {
   );
 }
 
-export default NearbyStops;
+export default FunStuffs;

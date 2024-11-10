@@ -12,6 +12,7 @@ import { Separator } from "@radix-ui/react-separator";
 import localFont from "next/font/local";
 import "./globals.css";
 import { ModeToggle } from "@/components/ModeToggle";
+import { PopupOverlay } from "@/components/pop-up";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -23,8 +24,6 @@ const geistMono = localFont({
   variable: "--font-geist-mono",
   weight: "100 900",
 });
-// main test
-// test 2
 
 export default function RootLayout({
   children,
@@ -36,6 +35,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <PopupOverlay></PopupOverlay>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
@@ -45,12 +45,12 @@ export default function RootLayout({
           <SidebarProvider>
             <AppSidebar />
             <SidebarInset>
-              <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 justify-between">
+              <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 justify-between md:hidden">
                 <SidebarTrigger className="-ml-1" />
                 <Separator orientation="vertical" className="mr-2 h-4" />
                 {/* <ActiveTabTitle />{" "} */}
                 {/* Render the ActiveTabTitle client component */}
-                <ModeToggle></ModeToggle>
+                <ModeToggle />
               </header>
               {children}
             </SidebarInset>

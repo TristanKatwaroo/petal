@@ -1,13 +1,14 @@
 "use client";
 
-import { AppSidebar } from "@/components/app-sidebar"
-import NearbyStops from "@/components/NearbyStops"
-import { Separator } from "@/components/ui/separator"
+import { AppSidebar } from "@/components/app-sidebar";
+import NearbyStops from "@/components/NearbyStops";
+import FunStuffs from "@/components/fun-stuffs";
+import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
 export default function Home() {
   return (
@@ -19,8 +20,9 @@ export default function Home() {
           <div className="aspect-video rounded-xl bg-muted/50" />
           <div className="aspect-video rounded-xl bg-muted/50" />
         </div>
-        <div className="min-h-[100vh] flex-1 rounded-xl bg-muted/50 md:min-h-min" />
+        {/* <div className="min-h-[100vh] flex-1 rounded-xl bg-muted/50 md:min-h-min" /> */}
+        <FunStuffs />
       </div>
     </div>
-  )
+  );
 }
