@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { ModeToggle } from "./ModeToggle";
+import Link from "next/link";
 
 const data = {
   navMain: [
@@ -74,20 +76,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               return (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <a
-                      className={cn(
-                        "px-3 py-2 flex items-center hover:text-blue-400",
-                        isActive ? "text-blue-400" : ""
-                      )}
+                    <Link
                       href={item.url}
+                      className={cn(
+                        "px-3 py-2 flex items-center hover:text-blue-500",
+                        isActive ? "text-blue-500 font-bold" : ""
+                      )}
                     >
                       {item.icon}
                       {item.title}
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               );
             })}
+            <ModeToggle />
           </SidebarMenu>
         ))}
       </SidebarContent>
