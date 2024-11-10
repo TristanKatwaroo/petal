@@ -70,7 +70,7 @@ export default function OutdoorEvents() {
 
   return (
     <div className="p-6 bg-background">
-      <h1 className="text-3xl font-bold mb-10 text-center">Outdoor Events</h1>
+      <h1 className="text-3xl font-bold mb-10 text-center">Events</h1>
       <div className="h-1 w-10 bg-blue-300 absolute top-14 left-[38rem]"></div>
 
       {/* Price Filters */}
