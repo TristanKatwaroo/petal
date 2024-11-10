@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 @import url("https://fonts.googleapis.com/css2?family=Afacad+Flux:wght@100..1000&family=Arsenal+SC:ital,wght@0,400;0,700;1,400;1,700&family=Geist+Mono:wght@100..900&family=Sour+Gummy:ital,wght@0,100..900;1,100..900&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Lexend+Tera&display=swap');
+
 
 body {
   font-family: Arial, Helvetica, sans-serif;
