@@ -1,16 +1,49 @@
+// app/navigate/page.tsx
+
 "use client";
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect, Suspense } from 'react';
 import mapboxgl from 'mapbox-gl';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useSearchParams } from 'next/navigation';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Navigation, Map as MapIcon, LocateFixed, AlertCircle, Car, Bus, Bike } from "lucide-react";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger
+} from "@/components/ui/tabs";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle
+} from "@/components/ui/alert";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+import {
+  Navigation,
+  Map as MapIcon,
+  LocateFixed,
+  AlertCircle,
+  Car,
+  Bus,
+  Bike
+} from "lucide-react";
 import Map from '@/components/Map';
-import { ComboboxSearch } from "@/components/ComboboxSearch";
 import { LocationSearch } from '@/components/LocationSearch';
+import { useToast } from "@/hooks/use-toast"
+import { Toaster } from "@/components/ui/toaster";
 
 interface RouteInfo {
   distance: number;
@@ -29,7 +62,39 @@ interface LocationCoords {
 
 type TransportMode = 'driving' | 'walking' | 'cycling' | 'transit';
 
-export default function NavigatePage() {
+type TransportTip = {
+  [key in TransportMode]: {
+    title: string;
+    description: string;
+    icon: React.ReactNode;
+  };
+};
+
+const TRANSPORT_TIPS: TransportTip = {
+  driving: {
+    title: "Driving Safety Tip",
+    description: "Keep a safe distance from the car in front of you.",
+    icon: <Car className="h-4 w-4" />
+  },
+  walking: {
+    title: "Walking Safety Tip",
+    description: "Look both ways before crossing the street.",
+    icon: <Navigation className="h-4 w-4" />
+  },
+  cycling: {
+    title: "Biking Safety Tip",
+    description: "Wear a helmet for safety.",
+    icon: <Bike className="h-4 w-4" />
+  },
+  transit: {
+    title: "Transit Tip",
+    description: "Check the schedule before starting your journey.",
+    icon: <Bus className="h-4 w-4" />
+  }
+};
+
+// Separate component for content to enable Suspense
+function NavigateContent() {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
@@ -39,6 +104,52 @@ export default function NavigatePage() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [transportMode, setTransportMode] = useState<TransportMode>('driving');
+  const { toast } = useToast();
+  const previousMode = useRef<TransportMode | null>(null);
+
+  const searchParams = useSearchParams();
+  const destination = searchParams.get('destination');
+  const lat = searchParams.get('lat');
+  const lon = searchParams.get('lon');
+
+  // Set Mapbox access token
+  mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || '';
+
+  // Initialize the map
+  useEffect(() => {
+    if (mapContainer.current && !map.current) {
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/streets-v11',
+        center: userLocation || [ -79.7622, 43.6847 ], // Default center if user location not available
+        zoom: 12,
+      });
+    }
+  }, [userLocation]);
+
+  // Update endLocation based on URL parameters
+  useEffect(() => {
+    if (destination && lat && lon) {
+      setEndLocation({
+        text: decodeURIComponent(destination),
+        coordinates: [parseFloat(lon), parseFloat(lat)],
+      });
+    }
+  }, [destination, lat, lon]);
+
+  // Show toast when transport mode changes
+  useEffect(() => {
+    if (previousMode.current !== transportMode) {
+      const tip = TRANSPORT_TIPS[transportMode];
+      toast({
+        title: tip.title,
+        description: tip.description,
+        duration: 5000,
+        className: "bg-background border-border",
+      });
+      previousMode.current = transportMode;
+    }
+  }, [transportMode, toast]);
 
   const formatDuration = (minutes: number): string => {
     const hours = Math.floor(minutes / 60);
@@ -352,5 +463,16 @@ export default function NavigatePage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function NavigatePage() {
+  return (
+    <>
+      <Suspense fallback={<div>Loading...</div>}>
+        <NavigateContent />
+      </Suspense>
+      <Toaster />
+    </>
   );
 }

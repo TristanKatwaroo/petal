@@ -38,6 +38,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import NearbyThings from "@/components/NearbyThings";
 
 export default function Home() {
   return (
