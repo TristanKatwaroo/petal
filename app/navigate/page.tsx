@@ -2,6 +2,7 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import mapboxgl from 'mapbox-gl';
+import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -73,6 +74,21 @@ export default function NavigatePage() {
   const [transportMode, setTransportMode] = useState<TransportMode>('driving');
   const { toast } = useToast();
   const previousMode = useRef<TransportMode | null>(null);
+  
+  const searchParams = useSearchParams();
+  const destination = searchParams.get('destination');
+  const lat = searchParams.get('lat');
+  const lon = searchParams.get('lon');
+
+  // Update endLocation based on URL parameters
+  useEffect(() => {
+    if (destination && lat && lon) {
+      setEndLocation({
+        text: decodeURIComponent(destination),
+        coordinates: [parseFloat(lon), parseFloat(lat)],
+      });
+    }
+  }, [destination, lat, lon]);
 
   // Show toast when transport mode changes
   useEffect(() => {

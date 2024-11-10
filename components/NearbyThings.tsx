@@ -1,19 +1,16 @@
+"use client";
+
 import { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, TentTree, Loader2, AlertCircle, MapPin } from 'lucide-react';
+import { useRouter } from 'next/navigation'; // Correct import
+import { ChevronLeft, ChevronRight, TentTree, AlertCircle, MapPin } from 'lucide-react';
+import { Toaster } from "@/components/ui/toaster";
 
 interface Place {
   name: string;
   vicinity: string;
+  coordinates: [number, number]; // [longitude, latitude]
   types: string[];
 }
-
-const dummyData: Place[] = [
-  { name: 'Central Park', vicinity: 'New York, NY', types: ['park'] },
-  { name: 'Statue of Liberty', vicinity: 'New York, NY', types: ['tourist_attraction'] },
-  { name: 'Times Square', vicinity: 'New York, NY', types: ['point_of_interest'] },
-  { name: 'The Metropolitan Museum of Art', vicinity: 'New York, NY', types: ['museum'] },
-  { name: 'Broadway Theatre', vicinity: 'New York, NY', types: ['theater'] },
-];
 
 const colorClasses = [
   'from-red-500 to-red-600',
@@ -29,12 +26,21 @@ const getRandomColorClass = () => {
   return colorClasses[Math.floor(Math.random() * colorClasses.length)];
 };
 
+// Sample data for Brampton, Ontario
+const bramptonPlaces: Place[] = [
+  { name: 'Chinguacousy Park', vicinity: 'Brampton, ON', coordinates: [-79.7616, 43.7034], types: ['park'] },
+  { name: 'Rose Theatre Brampton', vicinity: 'Brampton, ON', coordinates: [-79.7606, 43.6867], types: ['theater'] },
+  { name: 'Gage Park', vicinity: 'Brampton, ON', coordinates: [-79.7622, 43.6847], types: ['park'] },
+  { name: 'Peel Art Gallery, Museum and Archives (PAMA)', vicinity: 'Brampton, ON', coordinates: [-79.7610, 43.6835], types: ['museum'] },
+  { name: 'Professor’s Lake', vicinity: 'Brampton, ON', coordinates: [-79.7275, 43.7318], types: ['lake', 'recreational area'] },
+];
+
 function NearbyThings() {
-  const [places, setPlaces] = useState<Place[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const [places, setPlaces] = useState<Place[]>(bramptonPlaces); // Use predefined data
+  const [loading, setLoading] = useState<boolean>(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [visiblePlaces, setVisiblePlaces] = useState(3);
+  const router = useRouter(); // Hook for navigation
 
   useEffect(() => {
     const updateVisiblePlaces = () => {
@@ -49,40 +55,6 @@ function NearbyThings() {
     return () => window.removeEventListener('resize', updateVisiblePlaces);
   }, []);
 
-  useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const { latitude, longitude } = position.coords;
-          try {
-            const response = await fetch(`/api/nearbyThings?lat=${latitude}&lon=${longitude}`);
-            if (!response.ok) throw new Error('Failed to fetch data');
-            const data = await response.json();
-            if (data.length === 0) throw new Error('No nearby places found');
-            setPlaces(data);
-          } catch (err) {
-            console.error('Fetch failed, using dummy data:', err);
-            setPlaces(dummyData); // Set places to dummyData on failure
-            setError('Failed to load live data. Displaying sample data.');
-          } finally {
-            setLoading(false);
-          }
-        },
-        () => {
-          console.error('Geolocation failed, using dummy data');
-          setPlaces(dummyData); // Set places to dummyData if geolocation fails
-          setError('Unable to retrieve your location. Displaying sample data.');
-          setLoading(false);
-        }
-      );
-    } else {
-      console.error('Geolocation not supported, using dummy data');
-      setPlaces(dummyData); // Set places to dummyData if geolocation is not supported
-      setError('Geolocation is not supported by your browser. Displaying sample data.');
-      setLoading(false);
-    }
-  }, []);
-
   const handleNext = () => {
     if (currentIndex + visiblePlaces < places.length) {
       setCurrentIndex((prev) => prev + 1);
@@ -95,30 +67,18 @@ function NearbyThings() {
     }
   };
 
+  const handleCardClick = (place: Place) => {
+    // Navigate to the navigate page and set the end location
+    router.push(`/navigate?destination=${encodeURIComponent(place.name)}&lat=${place.coordinates[1]}&lon=${place.coordinates[0]}`);
+  };
+
   const isAtStart = currentIndex === 0;
   const lastIndex = Math.max(0, places.length - visiblePlaces);
   const isAtEnd = currentIndex >= lastIndex;
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-48 bg-gray-50 rounded-lg dark:bg-[hsl(20,14.3%,4.1%)]">
-        <div className="flex flex-col items-center space-y-2">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-          <p className="text-gray-600 dark:text-gray-100">Loading nearby places...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="w-[80vw] max-w-full bg-white rounded-xl shadow-lg p-6 overflow-hidden dark:bg-[hsl(20,14.3%,4.1%)]">
-      {error && (
-        <div className="flex items-center mb-4 text-red-600">
-          <AlertCircle className="h-6 w-6 mr-2" />
-          {error}
-        </div>
-      )}
-
+      <Toaster />
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-2">
           <TentTree className="h-6 w-6 text-blue-600" />
@@ -152,7 +112,12 @@ function NearbyThings() {
           style={{ transform: `translateX(-${currentIndex * (100 / visiblePlaces)}%)`, width: `${places.length * 25}rem` }}
         >
           {places.map((place, index) => (
-            <div key={index} className="flex-shrink-0 px-2" style={{ width: '25rem' }}>
+            <div
+              key={index}
+              className="flex-shrink-0 px-2 cursor-pointer"
+              style={{ width: '25rem' }}
+              onClick={() => handleCardClick(place)}
+            >
               <div className={`rounded-xl shadow-lg overflow-hidden bg-gradient-to-r ${getRandomColorClass()}`}>
                 <div className="p-4 text-white">
                   <div className="text-lg font-bold">{place.name}</div>
