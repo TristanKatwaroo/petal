@@ -1,9 +1,10 @@
 // src/components/ActiveTabTitle.tsx
 
-'use client';
+"use client";
 
-import { usePathname } from 'next/navigation';
+import { usePathname } from "next/navigation";
 
+// hello
 // Data structure for navigation items
 const data = {
   navMain: [
@@ -22,7 +23,7 @@ const data = {
 
 export function ActiveTabTitle() {
   const pathname = usePathname(); // Get the current path
-  
+
   // Find the active tab based on the pathname
   const activeTab = data.navMain
     .flatMap((section) => section.items)
