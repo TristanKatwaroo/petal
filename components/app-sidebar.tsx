@@ -85,7 +85,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </SidebarMenuItem>
               );
             })}
-            <ModeToggle />
+            <div className="hidden md:block">
+              <ModeToggle />
+            </div>
           </SidebarMenu>
         ))}
       </SidebarContent>
