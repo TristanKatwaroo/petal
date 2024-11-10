@@ -1,50 +1,52 @@
-import { useState, useEffect } from "react";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Bus,
-  Clock,
-  MapPin,
-  Loader2,
-  AlertCircle,
-} from "lucide-react";
+import { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, TentTree, Loader2, AlertCircle, MapPin } from 'lucide-react';
 
-interface StopData {
-  trip_id: string;
-  arrival_time: string;
-  departure_time: string;
-  stop_name: string;
-  route_short_name: string;
-  route_long_name: string;
+interface Place {
+  name: string;
+  vicinity: string;
+  types: string[];
 }
 
-const colorClasses = [
-  "from-red-500 to-red-600",
-  "from-teal-500 to-teal-600",
-  "from-yellow-500 to-yellow-600",
-  "from-blue-500 to-blue-600",
-  "from-purple-500 to-purple-600",
-  "from-green-500 to-green-600",
+const dummyData: Place[] = [
+  { name: 'Central Park', vicinity: 'New York, NY', types: ['park'] },
+  { name: 'Statue of Liberty', vicinity: 'New York, NY', types: ['tourist_attraction'] },
+  { name: 'Times Square', vicinity: 'New York, NY', types: ['point_of_interest'] },
+  { name: 'The Metropolitan Museum of Art', vicinity: 'New York, NY', types: ['museum'] },
+  { name: 'Broadway Theatre', vicinity: 'New York, NY', types: ['theater'] },
 ];
 
+const colorClasses = [
+  'from-red-500 to-red-600',
+  'from-teal-500 to-teal-600',
+  'from-yellow-500 to-yellow-600',
+  'from-blue-500 to-blue-600',
+  'from-purple-500 to-purple-600',
+  'from-green-500 to-green-600',
+];
+
+// Utility function to randomly pick a color class
+const getRandomColorClass = () => {
+  return colorClasses[Math.floor(Math.random() * colorClasses.length)];
+};
+
 function NearbyThings() {
-  const [stops, setStops] = useState<StopData[]>([]);
+  const [places, setPlaces] = useState<Place[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [visibleStops, setVisibleStops] = useState(3);
+  const [visiblePlaces, setVisiblePlaces] = useState(3);
 
   useEffect(() => {
-    const updateVisibleStops = () => {
-      if (window.innerWidth >= 1280) setVisibleStops(4);
-      else if (window.innerWidth >= 1024) setVisibleStops(3);
-      else if (window.innerWidth >= 768) setVisibleStops(2);
-      else setVisibleStops(1);
+    const updateVisiblePlaces = () => {
+      if (window.innerWidth >= 1280) setVisiblePlaces(4);
+      else if (window.innerWidth >= 1024) setVisiblePlaces(3);
+      else if (window.innerWidth >= 768) setVisiblePlaces(2);
+      else setVisiblePlaces(1);
     };
 
-    updateVisibleStops();
-    window.addEventListener("resize", updateVisibleStops);
-    return () => window.removeEventListener("resize", updateVisibleStops);
+    updateVisiblePlaces();
+    window.addEventListener('resize', updateVisiblePlaces);
+    return () => window.removeEventListener('resize', updateVisiblePlaces);
   }, []);
 
   useEffect(() => {
@@ -53,31 +55,36 @@ function NearbyThings() {
         async (position) => {
           const { latitude, longitude } = position.coords;
           try {
-            const response = await fetch(
-              `/api/processGTFS?lat=${latitude}&lon=${longitude}`
-            );
-            if (!response.ok) throw new Error("Failed to fetch data");
+            const response = await fetch(`/api/nearbyThings?lat=${latitude}&lon=${longitude}`);
+            if (!response.ok) throw new Error('Failed to fetch data');
             const data = await response.json();
-            setStops(data.upcomingRoutes);
-            setLoading(false);
+            if (data.length === 0) throw new Error('No nearby places found');
+            setPlaces(data);
           } catch (err) {
-            setError("Failed to load stops. Please try again later.");
+            console.error('Fetch failed, using dummy data:', err);
+            setPlaces(dummyData); // Set places to dummyData on failure
+            setError('Failed to load live data. Displaying sample data.');
+          } finally {
             setLoading(false);
           }
         },
         () => {
-          setError("Unable to retrieve your location.");
+          console.error('Geolocation failed, using dummy data');
+          setPlaces(dummyData); // Set places to dummyData if geolocation fails
+          setError('Unable to retrieve your location. Displaying sample data.');
           setLoading(false);
         }
       );
     } else {
-      setError("Geolocation is not supported by your browser.");
+      console.error('Geolocation not supported, using dummy data');
+      setPlaces(dummyData); // Set places to dummyData if geolocation is not supported
+      setError('Geolocation is not supported by your browser. Displaying sample data.');
       setLoading(false);
     }
   }, []);
 
   const handleNext = () => {
-    if (currentIndex + visibleStops < stops.length) {
+    if (currentIndex + visiblePlaces < places.length) {
       setCurrentIndex((prev) => prev + 1);
     }
   };
@@ -88,70 +95,41 @@ function NearbyThings() {
     }
   };
 
-  const formatTime = (time: string) => {
-    try {
-      const [hours, minutes] = time.split(":");
-      const date = new Date();
-      date.setHours(parseInt(hours), parseInt(minutes));
-      return date.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      });
-    } catch {
-      return time;
-    }
-  };
+  const isAtStart = currentIndex === 0;
+  const lastIndex = Math.max(0, places.length - visiblePlaces);
+  const isAtEnd = currentIndex >= lastIndex;
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-48 bg-gray-50 rounded-lg dark:bg-[hsl(20,14.3%,4.1%)]">
         <div className="flex flex-col items-center space-y-2">
           <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-          <p className="text-gray-600 dark:text-gray-100">
-            Loading nearby stops...
-          </p>
+          <p className="text-gray-600 dark:text-gray-100">Loading nearby places...</p>
         </div>
       </div>
     );
   }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-48 bg-red-50 rounded-lg dark:bg-[hsl(20,14.3%,4.1%)]">
-        <div className="flex flex-col items-center space-y-2">
-          <AlertCircle className="h-8 w-8 text-red-500" />
-          <p className="text-red-600">{error}</p>
-        </div>
-      </div>
-    );
-  }
-
-  // const isAtStart = currentIndex === 0;
-  // const isAtEnd = currentIndex + visibleStops >= stops.length;
-  const isAtStart = currentIndex === 0;
-  const lastIndex = Math.max(0, stops.length - visibleStops);
-  // const lastIndex = 100;
-  const isAtEnd = currentIndex >= lastIndex;
 
   return (
-    // <div className="flex items-center justify-center h-48 rounded-lg bg-gray-50 dark:bg-[hsl(20,14.3%,4.1%)]">
     <div className="w-[80vw] max-w-full bg-white rounded-xl shadow-lg p-6 overflow-hidden dark:bg-[hsl(20,14.3%,4.1%)]">
+      {error && (
+        <div className="flex items-center mb-4 text-red-600">
+          <AlertCircle className="h-6 w-6 mr-2" />
+          {error}
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-2">
-          <Bus className="h-6 w-6 text-blue-600" />
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            Things To Do
-          </h2>
+          <TentTree className="h-6 w-6 text-blue-600" />
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Things To Do Nearby</h2>
         </div>
         <div className="flex space-x-2">
           <button
             onClick={handlePrev}
             disabled={isAtStart}
             className={`p-2 rounded-full transition-all duration-200 ${
-              isAtStart
-                ? "opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-700"
-                : "hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600"
+              isAtStart ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 dark:hover:bg-gray-700'
             }`}
           >
             <ChevronLeft className="h-6 w-6 text-gray-600 dark:text-gray-300" />
@@ -160,9 +138,7 @@ function NearbyThings() {
             onClick={handleNext}
             disabled={isAtEnd}
             className={`p-2 rounded-full transition-all duration-200 ${
-              isAtEnd
-                ? "opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-700"
-                : "hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600"
+              isAtEnd ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 dark:hover:bg-gray-700'
             }`}
           >
             <ChevronRight className="h-6 w-6 text-gray-600 dark:text-gray-300" />
@@ -173,53 +149,15 @@ function NearbyThings() {
       <div className="relative w-full overflow-hidden">
         <div
           className="flex transition-transform duration-500 ease-in-out"
-          style={{
-            transform: `translateX(-${currentIndex * (100 / visibleStops)}%)`,
-            // width: `${stops.length * (100 / visibleStops)}%`,
-            width: `120rem`,
-          }}
+          style={{ transform: `translateX(-${currentIndex * (100 / visiblePlaces)}%)`, width: `${places.length * 25}rem` }}
         >
-          {stops.map((stop, index) => (
-            <div
-              key={index}
-              className="flex-shrink-0 px-2"
-              // style={{ width: `calc(100% / ${visibleStops})` }}
-              style={{ width: "25rem" }}
-            >
-              <div
-                className={`rounded-xl shadow-lg overflow-hidden bg-gradient-to-r ${
-                  colorClasses[index % colorClasses.length]
-                }`}
-              >
+          {places.map((place, index) => (
+            <div key={index} className="flex-shrink-0 px-2" style={{ width: '25rem' }}>
+              <div className={`rounded-xl shadow-lg overflow-hidden bg-gradient-to-r ${getRandomColorClass()}`}>
                 <div className="p-4 text-white">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-4xl font-bold">
-                      {stop.route_short_name}
-                    </span>
-                    <div className="text-right">
-                      <div className="flex items-center space-x-1">
-                        <Clock className="h-4 w-4" />
-                        <span className="text-xl font-semibold">
-                          {formatTime(stop.arrival_time)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-start space-x-2">
-                      <Bus className="h-4 w-4 mt-1 flex-shrink-0" />
-                      <p className="text-sm font-medium line-clamp-2">
-                        {stop.route_long_name}
-                      </p>
-                    </div>
-                    <div className="flex items-start space-x-2">
-                      <MapPin className="h-4 w-4 mt-1 flex-shrink-0" />
-                      <p className="text-sm font-medium line-clamp-2">
-                        {stop.stop_name}
-                      </p>
-                    </div>
-                  </div>
+                  <div className="text-lg font-bold">{place.name}</div>
+                  <p className="text-sm text-gray-100">{place.vicinity}</p>
+                  <p className="text-sm">Type: {place.types.join(', ')}</p>
                 </div>
               </div>
             </div>
