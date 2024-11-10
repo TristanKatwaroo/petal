@@ -66,9 +66,9 @@ const config: Config = {
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)'
   		},
-		fontFamily: {
-			'lexend': ['"Lexend Tera"', 'sans-serif'],
-		},
+		  fontFamily: {
+			'edu-pre': ['"Edu AU VIC WA NT Pre"', 'cursive'],
+		  },
   	}
   },
   plugins: [require("tailwindcss-animate")],
