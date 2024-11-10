@@ -39,11 +39,6 @@ const data = {
           url: "/navigate",
           icon: <Map className="mr-1" />,
         },
-        {
-          title: "AI Assistant",
-          url: "/chat",
-          icon: <BotMessageSquare className="mr-1" />,
-        },
       ],
     },
   ],
