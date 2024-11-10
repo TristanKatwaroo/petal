@@ -24,6 +24,7 @@ const geistMono = localFont({
   weight: "100 900",
 });
 // main test
+// test 2
 
 export default function RootLayout({
   children,
