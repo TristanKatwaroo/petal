@@ -136,7 +136,7 @@ function NearbyStops() {
 
   return (
     // <div className="flex items-center justify-center h-48 rounded-lg bg-gray-50 dark:bg-[hsl(20,14.3%,4.1%)]">
-    <div className="w-[80vw] max-w-full bg-white rounded-xl shadow-lg p-6 overflow-hidden dark:bg-[hsl(20,14.3%,4.1%)]">
+    <div className="md:w-[80vw] w-[95vw] max-w-full bg-white rounded-xl shadow-lg p-6 overflow-hidden dark:bg-[hsl(20,14.3%,4.1%)]">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-2">
           <Bus className="h-6 w-6 text-blue-600" />

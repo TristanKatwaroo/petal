@@ -45,7 +45,7 @@ const bramptonPlaces: Place[] = [
     types: ["park"],
   },
   {
-    name: "Peel Art Gallery, Museum and Archives (PAMA)",
+    name: "Peel Art Gallery",
     vicinity: "Brampton, ON",
     coordinates: [-79.761, 43.6835],
     types: ["museum"],
@@ -99,7 +99,7 @@ function NearbyThings() {
   const isAtEnd = currentIndex >= places.length - visiblePlaces;
 
   return (
-    <div className="w-[80vw] max-w-full bg-white rounded-xl shadow-lg p-6 overflow-hidden dark:bg-[hsl(20,14.3%,4.1%)]">
+    <div className="md:w-[80vw] w-[95vw] max-w-full bg-white rounded-xl shadow-lg p-6 overflow-hidden dark:bg-[hsl(20,14.3%,4.1%)]">
       <Toaster />
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-2">

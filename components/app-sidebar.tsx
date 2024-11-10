@@ -61,7 +61,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           />
           <h1 className="pt-5">Petal</h1>
         </div>
-        <SearchForm />
+        {/* <SearchForm /> */}
       </SidebarHeader>
       <SidebarContent className="px-3">
         {data.navMain.map((section) => (
