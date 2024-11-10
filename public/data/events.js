@@ -178,7 +178,7 @@ const eventData = [
     category: "Arts",
     price: "$30",
     image:
-      "https://th.bing.com/th?id=OIP.xO4KvszCgOpmSvYgqwxFYgHaE6&w=285&h=190&c=8&rs=1&qlt=90&o=6&dpr=1.3&pid=3.1&rm=2",
+      "https://th.bing.com/th/id/OIP.RCVt187Zdgb4OSYpLuHO2AHaE7?w=288&h=191&c=7&r=0&o=5&dpr=1.3&pid=1.7",
     participants: 20,
   },
 ];
