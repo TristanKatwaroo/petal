@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { usePathname } from "next/navigation"; // Import usePathname from next/navigation
-import { Home, Map, BotMessageSquare, Settings } from "lucide-react"; // Import icons
+import { Home, Map, BotMessageSquare, Settings, Calendar } from "lucide-react"; // Import icons
 
 import { SearchForm } from "@/components/search-form";
 import {
@@ -30,6 +30,11 @@ const data = {
           icon: <Home className="mr-1" />,
         },
         {
+          title: "Events",
+          url: "/events",
+          icon: <Calendar className="mr-1" />,
+        },
+        {
           title: "Navigate",
           url: "/navigate",
           icon: <Map className="mr-1" />,
@@ -38,11 +43,6 @@ const data = {
           title: "AI Assistant",
           url: "/chat",
           icon: <BotMessageSquare className="mr-1" />,
-        },
-        {
-          title: "Settings",
-          url: "/settings",
-          icon: <Settings className="mr-1" />,
         },
       ],
     },
