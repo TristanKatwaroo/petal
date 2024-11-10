@@ -4,10 +4,10 @@ export const data = {
       url: "/",
       items: [
         { title: "Home", url: "/" },
+        { title: "Events", url: "/events" },
         { title: "Navigate", url: "/navigate" },
         { title: "Chat", url: "/chat" },
         { title: "Store", url: "/store" },
-        { title: "Settings", url: "/settings" },
       ],
     },
   ],
