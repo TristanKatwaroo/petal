@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,8 +9,9 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Navigation, Map as MapIcon, LocateFixed, AlertCircle, Car, Bus, Bike } from "lucide-react";
 import Map from '@/components/Map';
-import { ComboboxSearch } from "@/components/ComboboxSearch";
 import { LocationSearch } from '@/components/LocationSearch';
+import { useToast } from "@/hooks/use-toast"
+import { Toaster } from "@/components/ui/toaster";
 
 interface RouteInfo {
   distance: number;
@@ -29,6 +30,37 @@ interface LocationCoords {
 
 type TransportMode = 'driving' | 'walking' | 'cycling' | 'transit';
 
+type TransportTip = {
+  [key in TransportMode]: {
+    title: string;
+    description: string;
+    icon: React.ReactNode;
+  };
+};
+
+const TRANSPORT_TIPS: TransportTip = {
+  driving: {
+    title: "Driving Safety Tip",
+    description: "Keep a safe distance from the car in front of you.",
+    icon: <Car className="h-4 w-4" />
+  },
+  walking: {
+    title: "Walking Safety Tip",
+    description: "Look both ways before crossing the street.",
+    icon: <Navigation className="h-4 w-4" />
+  },
+  cycling: {
+    title: "Biking Safety Tip",
+    description: "Wear a helmet for safety.",
+    icon: <Bike className="h-4 w-4" />
+  },
+  transit: {
+    title: "Transit Tip",
+    description: "Check the schedule before starting your journey.",
+    icon: <Bus className="h-4 w-4" />
+  }
+};
+
 export default function NavigatePage() {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -39,6 +71,22 @@ export default function NavigatePage() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [transportMode, setTransportMode] = useState<TransportMode>('driving');
+  const { toast } = useToast();
+  const previousMode = useRef<TransportMode | null>(null);
+
+  // Show toast when transport mode changes
+  useEffect(() => {
+    if (previousMode.current !== transportMode) {
+      const tip = TRANSPORT_TIPS[transportMode];
+      toast({
+        title: tip.title,
+        description: tip.description,
+        duration: 5000,
+        className: "bg-background border-border",
+      });
+      previousMode.current = transportMode;
+    }
+  }, [transportMode, toast]);
 
   const formatDuration = (minutes: number): string => {
     const hours = Math.floor(minutes / 60);
@@ -196,161 +244,164 @@ export default function NavigatePage() {
   };
 
   return (
-    <div className="container max-w-4xl mx-auto p-4 space-y-4">
-      <Card className="shadow-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Navigation className="h-6 w-6" />
-            PETAL Navigation
-          </CardTitle>
-          <CardDescription>
-            Plan your journey with multiple transportation options
-          </CardDescription>
-        </CardHeader>
-        
-        <CardContent className="space-y-4">
-          <Map mapRef={map} mapContainer={mapContainer} />
+    <>
+      <div className="container max-w-4xl mx-auto p-4 space-y-4">
+        <Card className="shadow-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Navigation className="h-6 w-6" />
+              PETAL Navigation
+            </CardTitle>
+            <CardDescription>
+              Plan your journey with multiple transportation options
+            </CardDescription>
+          </CardHeader>
+          
+          <CardContent className="space-y-4">
+            <Map mapRef={map} mapContainer={mapContainer} />
 
-          {error && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
 
-          <Tabs defaultValue="location" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="location" className="flex items-center gap-2">
-                <LocateFixed className="h-4 w-4" />
-                Locations
-              </TabsTrigger>
-              <TabsTrigger value="mode" className="flex items-center gap-2">
-                <MapIcon className="h-4 w-4" />
-                Transport Mode
-              </TabsTrigger>
-            </TabsList>
+            <Tabs defaultValue="location" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="location" className="flex items-center gap-2">
+                  <LocateFixed className="h-4 w-4" />
+                  Locations
+                </TabsTrigger>
+                <TabsTrigger value="mode" className="flex items-center gap-2">
+                  <MapIcon className="h-4 w-4" />
+                  Transport Mode
+                </TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="location" className="space-y-4">
-              <div className="space-y-4">
-                <Button
-                  onClick={getCurrentLocation}
-                  disabled={isLoading}
-                  variant="secondary"
-                  className="w-full"
+              <TabsContent value="location" className="space-y-4">
+                <div className="space-y-4">
+                  <Button
+                    onClick={getCurrentLocation}
+                    disabled={isLoading}
+                    variant="secondary"
+                    className="w-full"
+                  >
+                    <LocateFixed className="mr-2 h-4 w-4" />
+                    {isLoading ? 'Getting Location...' : 'Use Current Location'}
+                  </Button>
+
+                  <LocationSearch
+                    value={startLocation.text}
+                    onChange={(value, coords) => 
+                      setStartLocation({ 
+                        text: value, 
+                        coordinates: coords || [0, 0] 
+                      })
+                    }
+                    placeholder="Enter start location (or use current location)"
+                  />
+
+                  <LocationSearch
+                    value={endLocation.text}
+                    onChange={(value, coords) => 
+                      setEndLocation({ 
+                        text: value, 
+                        coordinates: coords || [0, 0] 
+                      })
+                    }
+                    placeholder="Enter destination"
+                  />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="mode">
+                <Select 
+                  value={transportMode} 
+                  onValueChange={(value: TransportMode) => setTransportMode(value)}
                 >
-                  <LocateFixed className="mr-2 h-4 w-4" />
-                  {isLoading ? 'Getting Location...' : 'Use Current Location'}
-                </Button>
-
-                <LocationSearch
-                  value={startLocation.text}
-                  onChange={(value, coords) => 
-                    setStartLocation({ 
-                      text: value, 
-                      coordinates: coords || [0, 0] 
-                    })
-                  }
-                  placeholder="Enter start location (or use current location)"
-                />
-
-                <LocationSearch
-                  value={endLocation.text}
-                  onChange={(value, coords) => 
-                    setEndLocation({ 
-                      text: value, 
-                      coordinates: coords || [0, 0] 
-                    })
-                  }
-                  placeholder="Enter destination"
-                />
-              </div>
-            </TabsContent>
-
-            <TabsContent value="mode">
-              <Select 
-                value={transportMode} 
-                onValueChange={(value: TransportMode) => setTransportMode(value)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select transport mode" />
-                </SelectTrigger>
-                <SelectContent className="p-2">
-                  <SelectItem value="driving">
-                    <div className="flex items-center gap-2">
-                      <Car className="h-4 w-4" />
-                      Driving
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="walking">
-                    <div className="flex items-center gap-2">
-                      <Navigation className="h-4 w-4" />
-                      Walking
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="cycling">
-                    <div className="flex items-center gap-2">
-                      <Bike className="h-4 w-4" />
-                      Cycling
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="transit">
-                    <div className="flex items-center gap-2">
-                      <Bus className="h-4 w-4" />
-                      Transit
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </TabsContent>
-          </Tabs>
-
-          <Button
-            onClick={getDirections}
-            disabled={isLoading || (!startLocation.text && !userLocation) || !endLocation.text}
-            className="w-full"
-          >
-            {isLoading ? 'Getting Directions...' : 'Get Directions'}
-          </Button>
-
-          {routeInfo && (
-            <Card className="border border-border">
-              <CardHeader>
-                <CardTitle>Route Summary</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">Total Distance</p>
-                    <p className="font-medium">{formatDistance(routeInfo.distance)}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">Estimated Time</p>
-                    <p className="font-medium">{formatDuration(routeInfo.duration)}</p>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <h4 className="font-medium">Turn-by-Turn Directions</h4>
-                  <div className="space-y-2">
-                    {routeInfo.steps.map((step, index) => (
-                      <div
-                        key={index}
-                        className="p-3 rounded-lg bg-muted/50 space-y-1 hover:bg-muted transition-colors"
-                      >
-                        <p>{step.instruction}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {formatDistance(step.distance)} • {formatDuration(step.duration)}
-                        </p>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select transport mode" />
+                  </SelectTrigger>
+                  <SelectContent className="p-2">
+                    <SelectItem value="driving">
+                      <div className="flex items-center gap-2">
+                        <Car className="h-4 w-4" />
+                        Driving
                       </div>
-                    ))}
+                    </SelectItem>
+                    <SelectItem value="walking">
+                      <div className="flex items-center gap-2">
+                        <Navigation className="h-4 w-4" />
+                        Walking
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="cycling">
+                      <div className="flex items-center gap-2">
+                        <Bike className="h-4 w-4" />
+                        Cycling
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="transit">
+                      <div className="flex items-center gap-2">
+                        <Bus className="h-4 w-4" />
+                        Transit
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </TabsContent>
+            </Tabs>
+
+            <Button
+              onClick={getDirections}
+              disabled={isLoading || (!startLocation.text && !userLocation) || !endLocation.text}
+              className="w-full"
+            >
+              {isLoading ? 'Getting Directions...' : 'Get Directions'}
+            </Button>
+
+            {routeInfo && (
+              <Card className="border border-border">
+                <CardHeader>
+                  <CardTitle>Route Summary</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <p className="text-sm text-muted-foreground">Total Distance</p>
+                      <p className="font-medium">{formatDistance(routeInfo.distance)}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm text-muted-foreground">Estimated Time</p>
+                      <p className="font-medium">{formatDuration(routeInfo.duration)}</p>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+
+                  <div className="space-y-2">
+                    <h4 className="font-medium">Turn-by-Turn Directions</h4>
+                    <div className="space-y-2">
+                      {routeInfo.steps.map((step, index) => (
+                        <div
+                          key={index}
+                          className="p-3 rounded-lg bg-muted/50 space-y-1 hover:bg-muted transition-colors"
+                        >
+                          <p>{step.instruction}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {formatDistance(step.distance)} • {formatDuration(step.duration)}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+      <Toaster />
+    </>
   );
 }
