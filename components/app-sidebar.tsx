@@ -75,11 +75,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               const isActive = pathname === item.url; // Compare with the current path
               return (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton asChild className="hover:text-blue-500">
                     <Link
                       href={item.url}
                       className={cn(
-                        "px-3 py-2 flex items-center hover:text-blue-500",
+                        "px-3 py-2 flex items-center",
                         isActive ? "text-blue-500 font-bold" : ""
                       )}
                     >
