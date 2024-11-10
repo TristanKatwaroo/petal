@@ -3,13 +3,14 @@
 import React, { useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Navigation, AlertCircle, LocateFixed, Bike, Bus, Car, MapIcon } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Navigation, Map as MapIcon, LocateFixed, AlertCircle, Car, Bus, Bike } from "lucide-react";
 import Map from '@/components/Map';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ComboboxSearch } from "@/components/ComboboxSearch";
+import { LocationSearch } from '@/components/LocationSearch';
 
 interface RouteInfo {
   distance: number;
@@ -21,14 +22,19 @@ interface RouteInfo {
   }>;
 }
 
+interface LocationCoords {
+  text: string;
+  coordinates: [number, number];
+}
+
 type TransportMode = 'driving' | 'walking' | 'cycling' | 'transit';
 
 export default function NavigatePage() {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
-  const [startLocation, setStartLocation] = useState<string>('');
-  const [endLocation, setEndLocation] = useState<string>('');
+  const [startLocation, setStartLocation] = useState<LocationCoords>({ text: '', coordinates: [0, 0] });
+  const [endLocation, setEndLocation] = useState<LocationCoords>({ text: '', coordinates: [0, 0] });
   const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,7 +59,7 @@ export default function NavigatePage() {
 
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
+        async (position) => {
           const location: [number, number] = [position.coords.longitude, position.coords.latitude];
           setUserLocation(location);
           
@@ -70,6 +76,22 @@ export default function NavigatePage() {
             new mapboxgl.Marker({ color: '#0e0e95', className: 'user-location-marker' })
               .setLngLat(location)
               .addTo(map.current);
+
+            // Reverse geocode the location to get the address
+            try {
+              const response = await fetch(
+                `https://api.mapbox.com/geocoding/v5/mapbox.places/${location[0]},${location[1]}.json?access_token=${mapboxgl.accessToken}`
+              );
+              const data = await response.json();
+              if (data.features && data.features.length > 0) {
+                setStartLocation({
+                  text: data.features[0].place_name,
+                  coordinates: location
+                });
+              }
+            } catch (error) {
+              console.error('Error reverse geocoding:', error);
+            }
           }
           setIsLoading(false);
         },
@@ -101,29 +123,15 @@ export default function NavigatePage() {
       document.querySelectorAll('.mapboxgl-marker').forEach((marker) => marker.remove());
 
       // Get coordinates for start location
-      let startCoords = userLocation;
-      if (startLocation && !userLocation) {
-        const startResponse = await fetch(
-          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(startLocation)}.json?access_token=${mapboxgl.accessToken}`
-        );
-        const startData = await startResponse.json();
-        if (startData.features.length > 0) {
-          startCoords = startData.features[0].center;
-        }
-      }
+      let startCoords = userLocation || startLocation.coordinates;
+      const endCoords = endLocation.coordinates;
 
-      const endResponse = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(endLocation)}.json?access_token=${mapboxgl.accessToken}`
-      );
-      const endData = await endResponse.json();
-      
-      if (!startCoords || endData.features.length === 0) {
+      if (!startCoords || !endCoords) {
         throw new Error('Could not find one or both locations');
       }
 
-      const endCoords = endData.features[0].center;
-
-      const directionsUrl = `https://api.mapbox.com/directions/v5/mapbox/${transportMode}/${startCoords[0]},${startCoords[1]};${endCoords[0]},${endCoords[1]}?steps=true&geometries=geojson&access_token=${mapboxgl.accessToken}`;      const response = await fetch(directionsUrl);
+      const directionsUrl = `https://api.mapbox.com/directions/v5/mapbox/${transportMode}/${startCoords[0]},${startCoords[1]};${endCoords[0]},${endCoords[1]}?steps=true&geometries=geojson&access_token=${mapboxgl.accessToken}`;
+      const response = await fetch(directionsUrl);
       const data = await response.json();
 
       if (!data.routes || data.routes.length === 0) {
@@ -142,7 +150,7 @@ export default function NavigatePage() {
         })),
       });
 
-      // Add the route to the map
+      // Add route to map
       map.current.addLayer({
         id: 'route',
         type: 'line',
@@ -160,7 +168,8 @@ export default function NavigatePage() {
         },
         paint: {
           'line-color': '#0e0e95',
-          'line-width': 5
+          'line-width': 5,
+          'line-opacity': 0.75
         }
       });
 
@@ -173,7 +182,7 @@ export default function NavigatePage() {
         .setLngLat(endCoords)
         .addTo(map.current);
 
-      // Fit map to show the entire route
+      // Fit map to show entire route
       const bounds = new mapboxgl.LngLatBounds();
       route.geometry.coordinates.forEach((coord: [number, number]) => bounds.extend(coord));
       map.current.fitBounds(bounds, { padding: 50 });
@@ -185,11 +194,10 @@ export default function NavigatePage() {
       setIsLoading(false);
     }
   };
-  
 
   return (
-    <div className="container mx-auto p-4 space-y-4">
-      <Card>
+    <div className="container max-w-4xl mx-auto p-4 space-y-4">
+      <Card className="shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Navigation className="h-6 w-6" />
@@ -235,18 +243,26 @@ export default function NavigatePage() {
                   {isLoading ? 'Getting Location...' : 'Use Current Location'}
                 </Button>
 
-                <Input
-                  value={startLocation}
-                  onChange={(e) => setStartLocation(e.target.value)}
+                <LocationSearch
+                  value={startLocation.text}
+                  onChange={(value, coords) => 
+                    setStartLocation({ 
+                      text: value, 
+                      coordinates: coords || [0, 0] 
+                    })
+                  }
                   placeholder="Enter start location (or use current location)"
-                  className="w-full"
                 />
 
-                <Input
-                  value={endLocation}
-                  onChange={(e) => setEndLocation(e.target.value)}
+                <LocationSearch
+                  value={endLocation.text}
+                  onChange={(value, coords) => 
+                    setEndLocation({ 
+                      text: value, 
+                      coordinates: coords || [0, 0] 
+                    })
+                  }
                   placeholder="Enter destination"
-                  className="w-full"
                 />
               </div>
             </TabsContent>
@@ -259,7 +275,7 @@ export default function NavigatePage() {
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select transport mode" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="p-2">
                   <SelectItem value="driving">
                     <div className="flex items-center gap-2">
                       <Car className="h-4 w-4" />
@@ -291,14 +307,14 @@ export default function NavigatePage() {
 
           <Button
             onClick={getDirections}
-            disabled={isLoading}
+            disabled={isLoading || (!startLocation.text && !userLocation) || !endLocation.text}
             className="w-full"
           >
             {isLoading ? 'Getting Directions...' : 'Get Directions'}
           </Button>
 
           {routeInfo && (
-            <Card>
+            <Card className="border border-border">
               <CardHeader>
                 <CardTitle>Route Summary</CardTitle>
               </CardHeader>
@@ -320,7 +336,7 @@ export default function NavigatePage() {
                     {routeInfo.steps.map((step, index) => (
                       <div
                         key={index}
-                        className="p-3 rounded-lg bg-muted/50 space-y-1"
+                        className="p-3 rounded-lg bg-muted/50 space-y-1 hover:bg-muted transition-colors"
                       >
                         <p>{step.instruction}</p>
                         <p className="text-sm text-muted-foreground">
