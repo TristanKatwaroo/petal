@@ -38,7 +38,7 @@ export default function RootLayout({
         <PopupOverlay></PopupOverlay>
         <ThemeProvider
           attribute="class"
-          defaultTheme="dark"
+          defaultTheme="light"
           enableSystem
           disableTransitionOnChange
         >
