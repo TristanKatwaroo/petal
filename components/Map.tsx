@@ -4,7 +4,7 @@ import React, { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
-mapboxgl.accessToken = 'pk.eyJ1IjoiZ2F2enp6IiwiYSI6ImNtM2F0OXZlMTFnN2oyanBzaDRud3RoeDQifQ.CRAAAxTnDjvmwDiVNMWDXw';
+mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || '';
 
 interface MapProps {
   mapRef: React.MutableRefObject<mapboxgl.Map | null>;
