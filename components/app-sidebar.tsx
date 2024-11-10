@@ -64,7 +64,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             height={60} // Adjust height as needed
             className="pt-3 pb-1 px-3" // Add any additional styling if needed
           />
-          <h1 className="pt-5">Travel easy</h1>
+          <h1 className="pt-5">Petal</h1>
         </div>
         <SearchForm />
       </SidebarHeader>

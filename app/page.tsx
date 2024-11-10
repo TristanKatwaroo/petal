@@ -47,10 +47,10 @@ export default function Home() {
       <div className="relative bg-[url('/images/background.png')] bg-cover bg-center h-[15rem] mt-8 mb-5 rounded-2xl w-[75vw] ml-8">
         {/* <div className="absolute inset-0 bg-white/50 z-[-1]"></div> */}
         <h1 className="text-3xl text-black dark:text-black w-[100%] text-center mt-[7rem] font-extrabold">
-          Petal (Your Best Adventure Guide)
+          Your Best Adventure Guide
         </h1>
       </div>
-      <FunStuffs />
+      <NearbyThings />
     </div>
   );
 }
